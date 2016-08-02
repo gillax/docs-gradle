@@ -1,0 +1,75 @@
+buildscript {
+  dependencies {
+    classpath "io.vertx:vertx-platform:2.1"
+  }
+}
+
+plugins {
+  id "org.kordamp.markdown.convert" version "1.1.0"
+}
+
+// for vert.x http server
+import org.vertx.java.platform.impl.cli.Starter
+import groovy.json.*
+
+
+// markdownToHtml Settings
+markdownToHtml {
+	configuration = [all: true]
+
+	// for copy method
+	inputs.file "lib/github.css"
+	outputs.dir "${outputDir}/css/"
+
+	doLast {
+		// github like css
+		// @see {@link https://gist.github.com/andyferra/2554919}
+		outputDir.eachFileRecurse { file ->
+			if (!file.directory) {
+				if (file.name.endsWith(".html")) {
+					file.append("<link href='/css/github.css' rel='stylesheet'></link>")
+				}
+			}
+		}
+		copy {
+			from "lib/github.css"
+			into "${outputDir}/css/"
+		}
+	}
+}
+
+
+// HTTP server
+task server(
+	group: 'Documentation',
+	description: 'vert.x2 HTTP server run',
+	dependsOn: markdownToHtml) << {
+
+	// port
+	int httpPort = (project.hasProperty("httpPort"))? "$httpPort".toInteger(): 8080
+
+	def config = new JsonBuilder()
+	config {
+		http_port httpPort
+		webapp markdownToHtml.outputDir.toString()
+	}
+
+	println "vert.x2 config => ${config.toString()}"
+
+	new File('config.json').text = config.toString()
+	Starter.main("run", "lib/server.js", "-conf", "config.json")
+}
+
+
+task clean(
+		type: Delete,
+		group: 'Documentation',
+		description: 'remove build dir') {
+	delete(project.buildDir)
+}
+
+
+// wrapper
+task wrapper(type: Wrapper) {
+	gradleVersion = "${gradleVersion}"
+}

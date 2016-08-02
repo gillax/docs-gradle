@@ -72,3 +72,9 @@ Project Dependencies
 - markdown-gradle-plugin - https://github.com/aalmiray/markdown-gradle-plugin
 - Vert.x 2 - http://vertx.io/vertx2/
 - andyferra/github.css - https://gist.github.com/andyferra/2554919
+
+
+別ページヘのリンク
+------------
+- [other page](other_page.html)
+- [ページ内リンク](other_page.html#link)
